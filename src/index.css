@@ -1,0 +1,373 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: "Playfair Display", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-primary: oklch(0.2161 0.0061 56.04);
+  --color-on-primary: oklch(1 0 0);
+  --color-secondary: oklch(0.3741 0.0087 67.56);
+  --color-accent: oklch(0.5538 0.1207 66.44);
+  --color-background: oklch(0.9848 0.0013 106.42);
+  --color-foreground: oklch(0.1469 0.0041 49.25);
+  --color-muted: oklch(0.9412 0.0069 247.9);
+  --color-border: oklch(0.8687 0.0043 56.37);
+  --color-destructive: oklch(0.5771 0.2152 27.33);
+  --color-ring: oklch(0.2161 0.0061 56.04);
+
+  /* Signature accent palette — restrained gradients & glows */
+  --color-pink: oklch(0.6464 0.2225 350.5);
+  --color-cyan: oklch(0.648 0.1607 213.8);
+  --color-violet: oklch(0.5418 0.2397 293.23);
+  --color-green: oklch(0.6455 0.1513 165.5);
+  --color-flamingo: oklch(0.6679 0.1761 18.6);
+  --color-aqua: oklch(0.85 0.09 208);
+}
+
+/* ---------- Deep blue sea backdrop (hero) ---------- */
+.sea-gradient {
+  background:
+    radial-gradient(140% 100% at 50% -10%, oklch(0.4 0.11 235 / 0.85) 0%, transparent 55%),
+    linear-gradient(
+      180deg,
+      oklch(0.27 0.09 245) 0%,
+      oklch(0.39 0.11 238) 42%,
+      oklch(0.54 0.12 228) 76%,
+      oklch(0.64 0.1 217) 100%
+    );
+}
+
+/* Dark vignette behind the brand for legibility */
+.sea-vignette {
+  background: radial-gradient(90% 80% at 50% 38%, oklch(0.15 0.07 250 / 0.55) 0%, transparent 70%);
+}
+
+/* White marble texture washed over the sea */
+.sea-texture {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+}
+
+.sea-wave {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  will-change: transform;
+  animation: sea-wave-move linear infinite;
+}
+.sea-wave--slow {
+  bottom: 108px;
+  height: 110px;
+  animation-duration: 18s;
+}
+.sea-wave--mid {
+  bottom: 62px;
+  height: 84px;
+  animation-duration: 12s;
+}
+.sea-wave--fast {
+  bottom: 22px;
+  height: 58px;
+  animation-duration: 8s;
+}
+
+/* Live ocean video layer (falls back to the CSS sea below it) */
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: saturate(0.85) brightness(0.92);
+  animation: hero-video-in 900ms ease-out forwards;
+}
+
+@keyframes hero-video-in {
+  to {
+    opacity: 0.92;
+  }
+}
+
+/* Sea-sand shore */
+.sea-sand {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 92px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, oklch(0.8 0.05 88) 0%, oklch(0.71 0.06 83) 100%);
+  background-blend-mode: overlay, normal;
+}
+
+@keyframes sea-wave-move {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-25%);
+  }
+}
+
+/* ---------- Base ---------- */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* White marble background — subtle stone texture over warm white */
+.marble-bg {
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(circle at 15% 8%, oklch(0.6464 0.2225 350.5 / 0.05) 0%, transparent 32%),
+    radial-gradient(circle at 85% 12%, oklch(0.648 0.1607 213.8 / 0.05) 0%, transparent 30%),
+    radial-gradient(circle at 78% 78%, oklch(0.5418 0.2397 293.23 / 0.05) 0%, transparent 34%),
+    radial-gradient(circle at 12% 82%, oklch(0.6455 0.1513 165.5 / 0.045) 0%, transparent 30%),
+    radial-gradient(circle at 50% 45%, oklch(0.6679 0.1761 18.6 / 0.04) 0%, transparent 40%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.028'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-blend-mode: normal, normal, normal, normal, normal, overlay;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Components ---------- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-primary);
+  cursor: pointer;
+  transition: all 200ms ease-out;
+}
+
+.btn-primary:hover {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px oklch(0.2161 0.0061 56.04 / 0.45);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 200ms ease-out;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--color-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  padding: 0.625rem 1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 200ms ease-out;
+}
+
+.btn-ghost:hover {
+  background: var(--color-muted);
+}
+
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+
+.card {
+  background: oklch(1 0 0 / 0.72);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px oklch(0.2161 0.0061 56.04 / 0.04);
+  transition: all 250ms ease-out;
+}
+
+.card-hover:hover {
+  box-shadow: 0 16px 32px -16px oklch(0.2161 0.0061 56.04 / 0.18);
+  transform: translateY(-3px);
+  border-color: oklch(0.2161 0.0061 56.04 / 0.25);
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  color: var(--color-foreground);
+  background: oklch(1 0 0 / 0.7);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.input::placeholder {
+  color: oklch(0.55 0.01 56 / 0.75);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px oklch(0.2161 0.0061 56.04 / 0.1);
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hairline {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Module accent helpers */
+.module-pink { color: var(--color-pink); }
+.module-cyan { color: var(--color-cyan); }
+.module-violet { color: var(--color-violet); }
+.module-green { color: var(--color-green); }
+.module-flamingo { color: var(--color-flamingo); }
+
+.glow-pink { box-shadow: 0 0 0 1px oklch(0.6464 0.2225 350.5 / 0.25), 0 12px 32px -12px oklch(0.6464 0.2225 350.5 / 0.45); }
+.glow-cyan { box-shadow: 0 0 0 1px oklch(0.648 0.1607 213.8 / 0.25), 0 12px 32px -12px oklch(0.648 0.1607 213.8 / 0.45); }
+.glow-violet { box-shadow: 0 0 0 1px oklch(0.5418 0.2397 293.23 / 0.25), 0 12px 32px -12px oklch(0.5418 0.2397 293.23 / 0.45); }
+.glow-green { box-shadow: 0 0 0 1px oklch(0.6455 0.1513 165.5 / 0.25), 0 12px 32px -12px oklch(0.6455 0.1513 165.5 / 0.45); }
+.glow-flamingo { box-shadow: 0 0 0 1px oklch(0.6679 0.1761 18.6 / 0.25), 0 12px 32px -12px oklch(0.6679 0.1761 18.6 / 0.45); }
+
+/* ---------- Motion ---------- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.anim-fade-up {
+  animation: fade-up 600ms ease-out both;
+}
+
+.anim-fade-in {
+  animation: fade-in 500ms ease-out both;
+}
+
+.anim-pulse-soft {
+  animation: pulse-soft 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .anim-fade-in,
+  .anim-pulse-soft {
+    animation: none;
+  }
+  .hero-video {
+    display: none;
+  }
+}
