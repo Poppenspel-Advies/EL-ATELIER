@@ -18,7 +18,13 @@ interface AuthContextValue {
     email: string,
     password: string,
     fullName?: string
-  ) => Promise<{ error: string | null; needsConfirmation: boolean }>;
+  ) => Promise<{
+    error: string | null;
+    needsConfirmation: boolean;
+    alreadyRegistered: boolean;
+  }>;
+  resendConfirmation: (email: string) => Promise<{ error: string | null }>;
+  requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -61,12 +67,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth`,
+            emailRedirectTo: window.location.origin,
             data: { full_name: fullName?.trim() || email.split("@")[0] },
           },
         });
-        if (error) return { error: friendlyAuthError(error.message), needsConfirmation: false };
-        return { error: null, needsConfirmation: !data.session };
+        if (error)
+          return {
+            error: friendlyAuthError(error.message),
+            needsConfirmation: false,
+            alreadyRegistered: false,
+          };
+        // When the email already has an account, GoTrue returns 200 with an
+        // empty `identities` array and NO session — and crucially sends NO
+        // email (anti-enumeration). Don't tell the user to check their inbox.
+        const alreadyRegistered =
+          !!data.user && data.user.identities?.length === 0;
+        return {
+          error: null,
+          alreadyRegistered,
+          needsConfirmation: !alreadyRegistered && !data.session,
+        };
+      },
+      async resendConfirmation(email) {
+        const { error } = await supabase.auth.resend({
+          type: "signup",
+          email,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        return { error: error ? friendlyAuthError(error.message) : null };
+      },
+      async requestPasswordReset(email) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        return { error: error ? friendlyAuthError(error.message) : null };
       },
       async signOut() {
         await supabase.auth.signOut();

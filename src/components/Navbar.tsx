@@ -1,16 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, Menu, X, Sparkles } from "lucide-react";
+import { LogOut, Menu, X, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { useSound } from "../lib/sound";
 import Logo from "./Logo";
 
 const NAV_ITEMS = [
-  { to: "/studio", label: "Studio" },
-  { to: "/atelier", label: "Atelier" },
+  { to: "/", label: "La Maison", short: "Maison", end: true },
+  { to: "/studio", label: "Studio", short: "Studio" },
+  { to: "/novia", label: "LA GRANDE NOVIA™", short: "Novia" },
+  { to: "/couture", label: "COUTURE CRÉATION™", short: "Création" },
+  { to: "/bijoux", label: "COUTURE BIJOUX™", short: "Bijoux" },
+  { to: "/dossier", label: "ATELIER DOSSIER™", short: "Dossier" },
+  { to: "/atelier", label: "Atelier", short: "Atelier" },
+  { to: "/booklet", label: "Le Livret", short: "Livret" },
+  { to: "/billing", label: "Abonnement", short: "Billings" },
 ];
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
+  const { soundOn, toggleSound } = useSound();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -43,30 +52,51 @@ export default function Navbar() {
       >
         <Logo />
 
-        {/* Desktop links */}
-        <div className="hidden items-center gap-1 md:flex">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200 cursor-pointer ${
-                  isActive
-                    ? "bg-primary text-on-primary"
-                    : "text-secondary hover:bg-muted hover:text-primary"
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+        {/* Desktop links — a fade-masked scroll row so no item is ever cut */}
+        <div className="relative hidden flex-1 justify-center lg:block">
+          <div className="no-scrollbar flex items-center justify-center gap-0.5 overflow-x-auto px-2 [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)]">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `shrink-0 rounded-full px-2.5 py-2 text-[13px] font-medium tracking-tight whitespace-nowrap transition-colors duration-200 cursor-pointer ${
+                    isActive
+                      ? "bg-primary text-on-primary"
+                      : "text-secondary hover:bg-muted hover:text-primary"
+                  }`
+                }
+              >
+                {item.short}
+              </NavLink>
+            ))}
+          </div>
         </div>
 
+        {/* Right cluster: sea sound + auth + mobile menu */}
+        <div className="flex items-center gap-1">
+          {/* Sea sound toggle */}
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-pressed={soundOn}
+            aria-label={soundOn ? "Mute sea sound" : "Play sea sound"}
+            title={soundOn ? "Mute sea sound" : "Play sea sound"}
+            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-primary transition-all duration-200 hover:bg-muted active:scale-95"
+          >
+            {soundOn ? (
+              <Volume2 className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <VolumeX className="h-5 w-5" aria-hidden="true" />
+            )}
+          </button>
+
         {/* Desktop auth */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {user ? (
             <>
-              <span className="max-w-[10rem] truncate text-sm text-secondary">
+              <span className="hidden max-w-[10rem] truncate text-sm text-secondary xl:block">
                 {user.email}
               </span>
               <button onClick={handleSignOut} className="btn-ghost">
@@ -90,7 +120,7 @@ export default function Navbar() {
         {/* Mobile menu button */}
         <button
           type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-primary transition-colors duration-200 hover:bg-muted md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-primary transition-colors duration-200 hover:bg-muted lg:hidden"
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -102,13 +132,14 @@ export default function Navbar() {
             <Menu className="h-5 w-5" aria-hidden="true" />
           )}
         </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}
       <div
         ref={menuRef}
         id="mobile-menu"
-        className={`overflow-hidden border-b border-border/70 bg-background/95 backdrop-blur-md transition-[max-height,opacity] duration-300 ease-out md:hidden ${
+        className={`overflow-hidden border-b border-border/70 bg-background/95 backdrop-blur-md transition-[max-height,opacity] duration-300 ease-out lg:hidden ${
           menuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
@@ -117,6 +148,7 @@ export default function Navbar() {
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.end}
               className={({ isActive }) =>
                 `rounded-xl px-4 py-3 text-base font-medium transition-colors duration-200 cursor-pointer ${
                   isActive

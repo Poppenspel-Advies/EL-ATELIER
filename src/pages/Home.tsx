@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { lazy, Suspense, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   Aperture,
+  Box,
   Feather,
   FileText,
   Layers,
@@ -9,6 +11,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import VideoBackdrop from "../components/VideoBackdrop";
+import { supportsWebGL } from "../lib/webgl";
+
+const MaisonExperience = lazy(() => import("../components/MaisonExperience"));
 
 const MODULES = [
   {
@@ -60,7 +65,38 @@ const STEPS = [
   },
 ];
 
+function MaisonLandingFallback() {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-[#0f0c09]">
+      <p className="font-heading text-2xl font-semibold tracking-[0.3em] text-ivory">
+        EL ATELIER
+      </p>
+      <p className="text-[0.65rem] font-semibold tracking-[0.45em] text-accent uppercase">
+        La maison s'ouvre…
+      </p>
+      <div className="maison-shimmer h-px w-44" aria-hidden="true" />
+    </div>
+  );
+}
+
 export default function Home() {
+  const [params] = useSearchParams();
+  const webgl = useMemo(() => supportsWebGL(), []);
+  const show3d = params.get("view") !== "classic" && webgl;
+
+  return show3d ? (
+    <Suspense fallback={<MaisonLandingFallback />}>
+      <MaisonExperience />
+    </Suspense>
+  ) : (
+    <HomeClassic webgl={webgl} />
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Classic 2D landing — also the fallback when WebGL is unavailable.   */
+/* ------------------------------------------------------------------ */
+function HomeClassic({ webgl }: { webgl: boolean }) {
   const { user } = useAuth();
   const studioTarget = user ? "/studio" : "/auth?mode=signup";
 
@@ -71,7 +107,7 @@ export default function Home() {
         {/* Deep blue sea backdrop (live ocean video over a CSS sea fallback) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
         >
           <div className="sea-gradient absolute inset-0" />
           <div className="sea-vignette absolute inset-0" />
@@ -114,7 +150,7 @@ export default function Home() {
           <div className="sea-sand" />
         </div>
 
-        <div className="relative mx-auto max-w-4xl text-center">
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
           <p className="anim-fade-up eyebrow flex items-center justify-center gap-3 text-on-primary/80">
             <span aria-hidden="true" className="h-px w-8 bg-on-primary/40" />
             Maison de couture intelligente
@@ -156,12 +192,12 @@ export default function Home() {
           </p>
 
           <div
-            className="anim-fade-up mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            className="anim-fade-up mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap"
             style={{ animationDelay: "360ms" }}
           >
             <Link
               to={studioTarget}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-on-primary px-7 py-3.5 text-sm font-semibold text-primary shadow-lg shadow-primary/20 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.97]"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-on-primary px-7 py-3.5 text-sm font-semibold text-primary shadow-lg shadow-primary/20 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.97]"
             >
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Enter the Studio
@@ -169,10 +205,19 @@ export default function Home() {
             </Link>
             <Link
               to="/atelier"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-on-primary/50 px-7 py-3.5 text-sm font-semibold text-on-primary backdrop-blur-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-on-primary/10 active:scale-[0.97]"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-on-primary/50 px-7 py-3.5 text-sm font-semibold text-on-primary backdrop-blur-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-on-primary/10 active:scale-[0.97]"
             >
               Explore the Archive
             </Link>
+            {webgl && (
+              <Link
+                to="/?view=3d"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-on-primary/50 px-7 py-3.5 text-sm font-semibold text-on-primary backdrop-blur-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-on-primary/10 active:scale-[0.97]"
+              >
+                <Box className="h-4 w-4" aria-hidden="true" />
+                Enter the Maison in 3D
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -265,36 +310,77 @@ export default function Home() {
       {/* ---------- CTA BAND ---------- */}
       <section className="px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-6xl">
-          <div className="card relative overflow-hidden rounded-3xl bg-primary p-10 text-center sm:p-16">
+          <div className="relative overflow-hidden rounded-3xl">
+            {/* Sea & sand backdrop — the same shore as the hero */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 opacity-30"
+              className="pointer-events-none absolute inset-0 z-0"
             >
-              <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-pink blur-3xl" />
-              <div className="absolute -right-10 -top-6 h-48 w-48 rounded-full bg-cyan blur-3xl" />
-              <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-violet blur-3xl" />
+              <div className="sea-gradient absolute inset-0" />
+              <div className="sea-vignette absolute inset-0" />
+              <VideoBackdrop />
+              <div className="sea-texture absolute inset-0" />
+
+              {/* Animated wave layers */}
+              <svg
+                className="sea-wave sea-wave--slow"
+                viewBox="0 0 1200 120"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0 60 C 120 15 280 10 400 48 S 700 95 820 55 S 1100 12 1200 52 L 1200 120 L 0 120 Z"
+                  fill="rgba(255,255,255,0.06)"
+                />
+              </svg>
+              <svg
+                className="sea-wave sea-wave--mid"
+                viewBox="0 0 1200 120"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0 55 C 150 10 320 100 480 58 S 800 100 950 52 S 1120 12 1200 50 L 1200 120 L 0 120 Z"
+                  fill="rgba(255,255,255,0.12)"
+                />
+              </svg>
+              <svg
+                className="sea-wave sea-wave--fast"
+                viewBox="0 0 1200 120"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0 62 C 140 20 300 95 460 60 S 780 100 940 54 S 1120 14 1200 56 L 1200 120 L 0 120 Z"
+                  fill="rgba(255,255,255,0.2)"
+                />
+              </svg>
+
+              {/* Sea-sand shore */}
+              <div className="sea-sand sea-sand--tall" />
             </div>
-            <h2 className="font-heading relative text-3xl font-medium text-on-primary sm:text-4xl">
-              Your first look awaits.
-            </h2>
-            <p className="relative mx-auto mt-4 max-w-xl text-sm leading-relaxed text-on-primary/80 sm:text-base">
-              Enter the studio, describe a vision, and let Pensamiento and
-              COUTURE VISION begin their work.
-            </p>
-            <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                to={studioTarget}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-on-primary px-6 py-3 text-sm font-semibold text-primary transition-all duration-200 ease-out hover:-translate-y-0.5 active:scale-97"
-              >
-                Forge a design
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
-                to="/atelier"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-on-primary/40 px-6 py-3 text-sm font-semibold text-on-primary transition-all duration-200 ease-out hover:bg-on-primary/10 hover:-translate-y-0.5 active:scale-97"
-              >
-                View the archive
-              </Link>
+
+            {/* Content */}
+            <div className="relative z-10 flex min-h-[420px] flex-col items-center justify-center px-8 py-16 text-center sm:px-16">
+              <h2 className="font-heading text-3xl font-medium text-ivory sm:text-4xl">
+                Your first look awaits.
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ivory/80 sm:text-base">
+                Enter the studio, describe a vision, and let Pensamiento and
+                COUTURE VISION begin their work.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  to={studioTarget}
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-on-primary px-6 py-3 text-sm font-semibold text-primary transition-all duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.97]"
+                >
+                  Forge a design
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+                <Link
+                  to="/atelier"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-ivory/40 px-6 py-3 text-sm font-semibold text-ivory transition-all duration-200 ease-out hover:bg-ivory/10 hover:-translate-y-0.5 active:scale-[0.97]"
+                >
+                  View the archive
+                </Link>
+              </div>
             </div>
           </div>
         </div>

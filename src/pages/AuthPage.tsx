@@ -9,7 +9,8 @@ export default function AuthPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, user, loading } = useAuth();
+  const { signIn, signUp, resendConfirmation, requestPasswordReset, user, loading } =
+    useAuth();
 
   const [mode, setMode] = useState<Mode>(
     searchParams.get("mode") === "signup" ? "signup" : "signin"
@@ -27,6 +28,33 @@ export default function AuthPage() {
     if (user && !loading) navigate(from, { replace: true });
   }, [user, loading, navigate, from]);
 
+  // Supabase's implicit flow reports auth failures in the URL fragment
+  // (e.g. #error=access_denied&error_code=otp_expired). Surface them as a
+  // friendly message instead of a raw error URL.
+  useEffect(() => {
+    const hash = location.hash.replace(/^#/, "");
+    if (!hash.includes("error=")) return;
+
+    const params = new URLSearchParams(hash);
+    const code = params.get("error_code") ?? "";
+    const description = params.get("error_description") ?? "";
+    const linkUsedOrExpired =
+      code === "otp_expired" || /invalid or has expired/i.test(description);
+
+    setMode("signin");
+    setError(
+      linkUsedOrExpired
+        ? "That confirmation link has already been used or has expired — but your account is ready. Just sign in below."
+        : "We couldn't complete that sign-in link. Please try again."
+    );
+    // Drop the error fragment so a page refresh doesn't show it again.
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search
+    );
+  }, [location.hash]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -43,21 +71,64 @@ export default function AuthPage() {
       if (error) setError(error);
       else navigate(from, { replace: true });
     } else {
-      const { error, needsConfirmation } = await signUp(
+      const { error, needsConfirmation, alreadyRegistered } = await signUp(
         email.trim(),
         password,
         fullName
       );
       if (error) {
         setError(error);
+      } else if (alreadyRegistered) {
+        setMode("signin");
+        setNotice(
+          "An account with this email already exists — you're all set. Sign in below instead; no confirmation email is needed."
+        );
       } else if (needsConfirmation) {
         setNotice(
-          "Almost there — we've sent a confirmation link to your inbox. Click it, then sign in."
+          "Almost there — we've sent a confirmation link to your inbox. It's single-use: click it once and you'll be signed in automatically. Check spam if it's slow, or use the resend link below."
         );
         setMode("signin");
       } else {
         navigate(from, { replace: true });
       }
+    }
+    setSubmitting(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim()) {
+      setError("Enter your email above, then resend the confirmation link.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    setNotice(null);
+    const { error } = await resendConfirmation(email.trim());
+    if (error) {
+      setError(error);
+    } else {
+      setNotice(
+        "We've sent a fresh confirmation link to your inbox. It's single-use — click it once and you'll be signed in automatically."
+      );
+    }
+    setSubmitting(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError("Enter your email above, and we'll send you a reset link.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    setNotice(null);
+    const { error } = await requestPasswordReset(email.trim());
+    if (error) {
+      setError(error);
+    } else {
+      setNotice(
+        "If an account exists for that address, we've sent a password reset link to your inbox — it's single-use, so click it once."
+      );
     }
     setSubmitting(false);
   };
@@ -200,6 +271,27 @@ export default function AuthPage() {
                   ? "Sign in"
                   : "Create account"}
             </button>
+
+            {mode === "signin" && (
+              <div className="mt-4 flex flex-col items-center gap-1.5 text-sm">
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={handleForgotPassword}
+                  className="cursor-pointer text-secondary underline-offset-4 transition-colors duration-200 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  Forgot your password?
+                </button>
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={handleResendConfirmation}
+                  className="cursor-pointer text-xs text-secondary/70 underline-offset-4 transition-colors duration-200 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  Didn&apos;t get a confirmation email? Resend it
+                </button>
+              </div>
+            )}
           </form>
         </div>
 

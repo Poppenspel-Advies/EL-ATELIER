@@ -12,14 +12,7 @@
 
 ## Tech Stack
 
-| Layer | Technology |
-| --- | --- |
-| UI | React 18 + TypeScript |
-| Build / Dev server | Vite 7 |
-| Styling | Tailwind CSS v4 |
-| Routing | React Router 7 |
-| Backend | Supabase (Auth + Edge Functions) |
-| AI | OpenAI (via a Supabase Edge Function — no keys in the browser) |
+LayerTechnologyUIReact 18 + TypeScriptBuild / Dev serverVite 7StylingTailwind CSS v4RoutingReact Router 7BackendSupabase (Auth + Edge Functions)AIGemini for text + free Pollinations API for image rendering — all via a Supabase Edge Function, no keys in the browser
 
 ## Prerequisites
 
@@ -27,7 +20,7 @@
 - A **Supabase project** (hosted) with:
   - Auth enabled (email/password)
   - The `generate-design` Edge Function deployed
-  - An `OPENAI_API_KEY` secret stored on the Edge Function
+  - A `GEMINI_API_KEY` secret stored on the Edge Function (text composition only — images render via the free Pollinations API, no key needed)
 
 ## Setup & Running Locally
 
@@ -59,12 +52,15 @@ You can find both values in the Supabase dashboard under **Project Settings → 
 
 The app throws a clear error on startup if either value is missing — it will not silently run misconfigured.
 
-### 3. Configure the OpenAI secret (server-side only)
+### 3. Configure the Gemini secret (server-side only)
 
-The OpenAI API key is **never** shipped to the browser. It is stored as a Supabase Edge Function secret and read only inside `supabase/functions/generate-design/index.ts` via `Deno.env.get("OPENAI_API_KEY")`.
+The Gemini API key is **never** shipped to the browser. It is stored as a Supabase Edge Function secret and read only inside `supabase/functions/generate-design/index.ts` via `Deno.env.get("GEMINI_API_KEY")`. It powers all text composition (briefs, maisons, dossiers, concierge chat).
 
+**Images are free and keyless:** COUTURE VISION renders illustrations, sketches, logos and covers through the free [Pollinations.ai](https://pollinations.ai) API (FLUX model) from inside the same Edge Function — no API key, no billing, no quota. So if the Gemini key is missing or out of quota, text features pause but image generation keeps working.
+
+- Get a free API key from **Google AI Studio** (https://aistudio.google.com/apikey)
 - Supabase dashboard → your project → **Edge Functions** → **Secrets**
-- Add `OPENAI_API_KEY` with your key value
+- Add `GEMINI_API_KEY` with your key value
 
 > If the atelier returns *"The atelier key is not configured"*, this secret is missing.
 
@@ -85,12 +81,7 @@ npm run preview    # serve the built app locally to verify
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the Vite dev server with HMR |
-| `npm run build` | Build the production bundle |
-| `npm run preview` | Locally preview the production build |
-| `npx tsc --noEmit` | Type-check the project without emitting |
+CommandDescription`npm run dev`Start the Vite dev server with HMR`npm run build`Build the production bundle`npm run preview`Locally preview the production build`npx tsc --noEmit`Type-check the project without emitting
 
 ## Project Structure
 
@@ -109,7 +100,7 @@ npm run preview    # serve the built app locally to verify
 │   └── pages/                  # Home, AuthPage, Studio, Archive, Dossier
 └── supabase/
     └── functions/
-        └── generate-design/    # Edge Function: brief composition + illustration
+        └── generate-design/    # Edge Function: text (Gemini) + images (Pollinations)
 ```
 
 ## Notes
@@ -117,3 +108,9 @@ npm run preview    # serve the built app locally to verify
 - Design language is defined in `docs/design-system/MASTER.md` (palette, typography, and anti-patterns) — keep new UI consistent with it.
 - Auth uses the implicit flow so sign-in works across ephemeral preview URLs.
 - Respect `prefers-reduced-motion` when adding animation; the video backdrop already falls back to a static CSS sea.
+
+## Troubleshooting
+
+- **"Email link is invalid or has expired" (**`otp_expired`**)** — confirmation links are **single-use and expire**. If you see this after clicking a link, the account is usually already confirmed — just sign in with email + password at `/auth`. To get a fresh link, resend the confirmation from **Supabase Dashboard → Authentication → Users** (or delete the user and sign up again).
+- **Redirect URL errors after clicking an email link** — make sure the URL your app runs on (e.g. `http://localhost:3000/**`) is listed in **Supabase Dashboard → Authentication → URL Configuration → Redirect URLs**, and set the **Site URL** to your app's origin.
+- **"The atelier key is not configured"** — the `GEMINI_API_KEY` secret is missing from the Edge Function (see step 3 above).

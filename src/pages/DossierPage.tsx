@@ -3,9 +3,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Check,
+  Download,
   Loader2,
   Pencil,
   RefreshCw,
+  Share2,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -18,6 +20,8 @@ import {
   renameDesign,
 } from "../lib/api";
 import type { Collection, Design } from "../lib/types";
+import TransformationPanel from "../components/TransformationPanel";
+import { downloadImage, shareLink } from "../lib/share";
 
 export default function DossierPage() {
   const { id } = useParams<{ id: string }>();
@@ -100,11 +104,33 @@ export default function DossierPage() {
     setBusy(true);
     try {
       await deleteDesign(design);
-      navigate("/archive");
+      navigate("/atelier");
     } catch (e) {
       setError(e instanceof Error ? e.message : "We couldn't delete the design.");
       setBusy(false);
     }
+  };
+
+  const handleDownload = async () => {
+    if (!design || !imageUrl) return;
+    setBusy(true);
+    try {
+      await downloadImage(imageUrl, `${design.name.replace(/[^a-z0-9]+/gi, "-")}.png`);
+      setNotice("Illustration downloaded.");
+    } catch {
+      setError("We couldn't download the illustration.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const result = await shareLink({
+      title: `${design?.name ?? "A look"} · EL ATELIER`,
+      text: `${design?.name ?? "A couture look"} — filed in my EL ATELIER dossier.`,
+      url: window.location.href,
+    });
+    if (result === "copy") setNotice("Dossier link copied.");
   };
 
   const formatDate = (iso: string) =>
@@ -130,7 +156,7 @@ export default function DossierPage() {
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
         <h1 className="font-heading text-2xl font-medium text-primary">Dossier not found</h1>
         <p className="mt-2 max-w-sm text-sm text-secondary">{error}</p>
-        <Link to="/archive" className="btn-secondary mt-6">
+        <Link to="/atelier" className="btn-secondary mt-6">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to the archive
         </Link>
@@ -144,7 +170,7 @@ export default function DossierPage() {
     <div className="px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto max-w-6xl">
         <Link
-          to="/archive"
+          to="/atelier"
           className="inline-flex items-center gap-2 text-sm text-secondary transition-colors duration-200 hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -169,6 +195,21 @@ export default function DossierPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={busy}
+                  className="btn-secondary text-sm"
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Download
+                </button>
+              )}
+              <button type="button" onClick={handleShare} className="btn-secondary text-sm">
+                <Share2 className="h-4 w-4" aria-hidden="true" />
+                Share
+              </button>
               <Link to="/studio" className="btn-secondary text-sm">
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 Forge again
@@ -368,6 +409,13 @@ export default function DossierPage() {
                     </select>
                   </div>
                 </section>
+
+                {/* Transformation — re-imagine this saved creation */}
+                <TransformationPanel
+                  sourceBrief={brief}
+                  sourcePrompt={design.prompt}
+                  museId={null}
+                />
               </>
             )}
           </div>

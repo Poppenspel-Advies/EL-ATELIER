@@ -17,6 +17,12 @@ export default function Footer() {
             <Link to="/studio" className="transition-colors duration-200 hover:text-primary">
               Studio
             </Link>
+            <Link to="/couture" className="transition-colors duration-200 hover:text-primary">
+              Couture Création
+            </Link>
+            <Link to="/dossier" className="transition-colors duration-200 hover:text-primary">
+              Atelier Dossier
+            </Link>
             <Link to="/atelier" className="transition-colors duration-200 hover:text-primary">
               Atelier
             </Link>
